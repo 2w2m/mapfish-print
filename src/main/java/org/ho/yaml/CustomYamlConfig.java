@@ -19,11 +19,7 @@
 
 package org.ho.yaml;
 
-import com.itextpdf.text.BaseColor;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.awt.Color;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,9 +32,11 @@ import org.ho.yaml.wrapper.DefaultSimpleTypeWrapper;
 import org.ho.yaml.wrapper.EnumWrapper;
 import org.ho.yaml.wrapper.ObjectWrapper;
 import org.mapfish.print.config.*;
+import org.mapfish.print.config.layout.AbsoluteColumnsBlock;
 import org.mapfish.print.config.layout.AttributesBlock;
 import org.mapfish.print.config.layout.ColumnDefs;
 import org.mapfish.print.config.layout.ColumnsBlock;
+import org.mapfish.print.config.layout.ConfigurableImageBlock;
 import org.mapfish.print.config.layout.Exceptions;
 import org.mapfish.print.config.layout.HorizontalAlign;
 import org.mapfish.print.config.layout.ImageBlock;
@@ -58,7 +56,7 @@ public class CustomYamlConfig extends YamlConfig {
         handlers.put(Layouts.class.getName(), Layouts.Wrapper.class.getName());
         handlers.put(ColumnDefs.class.getName(), ColumnDefs.Wrapper.class.getName());
         handlers.put(Exceptions.class.getName(), Exceptions.Wrapper.class.getName());
-        handlers.put(BaseColor.class.getName(), ColorWrapper.class.getName());
+        handlers.put(Color.class.getName(), ColorWrapper.class.getName());
 
         //special enum parser
         handlers.put(HorizontalAlign.class.getName(), CustomEnumWrapper.class.getName());
@@ -74,6 +72,8 @@ public class CustomYamlConfig extends YamlConfig {
         //blocks
         transfers.put("text", TextBlock.class.getName());
         transfers.put("image", ImageBlock.class.getName());
+        transfers.put("confimage", ConfigurableImageBlock.class.getName());
+        transfers.put("absblock", AbsoluteColumnsBlock.class.getName());
         transfers.put("columns", ColumnsBlock.class.getName());
         transfers.put("table", ColumnsBlock.class.getName());
         transfers.put("map", MapBlock.class.getName());
@@ -93,27 +93,6 @@ public class CustomYamlConfig extends YamlConfig {
         transfers.put("key", Key.class.getName());
 
         setTransfers(transfers);
-    }
-
-    /**
-     * Workaround for jyaml bug that does not close
-     * files.
-     */
-    @Override
-    public <T> T loadType(File file, Class<T> cls) throws FileNotFoundException {
-        FileInputStream inputStream = null;
-        try {
-            inputStream = new FileInputStream(file);
-            return super.loadType(inputStream, cls);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-    
-                }
-            }
-        }
     }
 
     public ObjectWrapper getWrapper(String classname) {
