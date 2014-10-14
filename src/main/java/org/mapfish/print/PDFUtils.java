@@ -23,18 +23,10 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 
 import com.itextpdf.awt.PdfGraphics2D;
-import com.itextpdf.text.BadElementException;
-import com.itextpdf.text.Chunk;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Element;
+import com.itextpdf.text.*;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Image;
-import com.itextpdf.text.Phrase;
-import com.itextpdf.text.pdf.BaseFont;
-import com.itextpdf.text.pdf.PdfContentByte;
-import com.itextpdf.text.pdf.PdfPCell;
-import com.itextpdf.text.pdf.PdfPTable;
-import com.itextpdf.text.pdf.PdfTemplate;
+import com.itextpdf.text.pdf.*;
 import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.DocumentLoader;
 import org.apache.batik.bridge.GVTBuilder;
@@ -42,13 +34,14 @@ import org.apache.batik.bridge.UserAgent;
 import org.apache.batik.bridge.UserAgentAdapter;
 import org.apache.batik.dom.svg.SAXSVGDocumentFactory;
 import org.apache.batik.dom.svg.SVGDocumentFactory;
-import java.io.ByteArrayOutputStream;
+
+import java.awt.*;
+import java.io.*;
+
 import org.apache.batik.gvt.GraphicsNode;
-import java.io.File;
 import org.apache.batik.util.XMLResourceDescriptor;
-import java.io.IOException;
 import org.apache.commons.httpclient.Header;
-import java.io.InputStream;
+
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -207,6 +200,9 @@ public class PDFUtils {
             }
             path = path.replace("/", File.separator);
             return Image.getInstance(new File(path).toURI().toURL());
+        } else if (uri.getPath().endsWith(".svg")) {
+            // Handling von SVG-Files
+            return handleSVG(context, uri);
         } else {
 
             final String contentType;
@@ -327,8 +323,11 @@ public class PDFUtils {
                     LOGGER.warn("The status code was not a valid code, a default image is being returned.");
 
                     return image;
+                } else if ("image/svg".equals(contentType)) {
+                    return handleSVG(context, uri);
                 } else {
                     if (LOGGER.isDebugEnabled()) LOGGER.debug("loaded image: " + uri);
+                    //FIXME wm: data ist bei SVG kein ByteArray!!!
                     return Image.getInstance(data);
                 }
             } catch (IOException e) {
@@ -340,6 +339,19 @@ public class PDFUtils {
 
                 return handleImageLoadError(context, e.getMessage());
             }
+        }
+    }
+
+    private static Image handleSVG(final RenderingContext context, final URI uri) throws
+            IOException, DocumentException {
+        // create SVG-Image from data
+        double maxIconWidth = 10000d;   // Dummy
+        double maxIconHeight = 10000d;   // Dummy
+        double scale = 1.0;   // Dummy
+        try {
+            return createImageFromSVG(context, uri.toString(), maxIconWidth, maxIconHeight, scale);
+        } catch(IOException e){
+            return handleImageLoadError(context, e.getMessage());
         }
     }
 
