@@ -4,42 +4,38 @@
 
 package org.mapfish.print.config.layout;
 
-import java.awt.Graphics2D;
-import java.awt.geom.AffineTransform;
+import com.itextpdf.awt.PdfGraphics2D;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.PdfContentByte;
+import org.apache.batik.ext.awt.RenderingHintsKeyExt;
+import org.apache.batik.transcoder.TranscoderInput;
+import org.apache.batik.transcoder.print.PrintTranscoder;
+import org.mapfish.print.*;
+import org.mapfish.print.utils.PJsonObject;
+
+import java.awt.*;
+import com.itextpdf.awt.geom.AffineTransform;
 import java.awt.print.PageFormat;
 import java.awt.print.Paper;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.apache.batik.ext.awt.RenderingHintsKeyExt;
-import org.apache.batik.transcoder.TranscoderInput;
-import org.apache.batik.transcoder.print.PrintTranscoder;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.mapfish.print.ChunkDrawer;
-import org.mapfish.print.InvalidValueException;
-import org.mapfish.print.PDFCustomBlocks;
-import org.mapfish.print.PDFUtils;
-import org.mapfish.print.RenderingContext;
-import org.mapfish.print.utils.PJsonObject;
 
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Rectangle;
-import com.lowagie.text.pdf.PdfContentByte;
 
 /**
  * 
  */
 public class ConfigurableImageBlock extends Block {
     private String url = null;
-    private String maxWidth = null;
-    private String maxHeight = null;
+    private double maxWidth = 0.0;
+    private double maxHeight = 0.0;
     private String rotation = "0";
 
     public void render(PJsonObject params, PdfElement target, RenderingContext context) throws DocumentException {
         final URI url;
         try {
-            final String urlTxt = PDFUtils.evalString(context, params, this.url);
+            final String urlTxt = PDFUtils.evalString(context, params, this.url,null);
             url = new URI(urlTxt);
         } catch (URISyntaxException e) {
             throw new InvalidValueException("url", this.url, e);
@@ -54,7 +50,7 @@ public class ConfigurableImageBlock extends Block {
     }
 
     private float getRotationRadian(RenderingContext context, PJsonObject params) {
-        return (float) (Float.parseFloat(PDFUtils.evalString(context, params, this.rotation)) * Math.PI / 180.0F);
+        return (float) (Float.parseFloat(PDFUtils.evalString(context, params, this.rotation,null)) * Math.PI / 180.0F);
     }
 
     private void drawSVG(RenderingContext context, PJsonObject params, PdfElement paragraph, URI url) throws DocumentException {
@@ -84,10 +80,10 @@ public class ConfigurableImageBlock extends Block {
     }
     
     private double getMaxWidth(RenderingContext context, PJsonObject params) {
-    	return Double.parseDouble(PDFUtils.evalString(context, params, this.maxWidth));
+    	return Double.parseDouble(PDFUtils.evalString(context, params, String.valueOf(this.maxWidth), null));
     }
     
-    public void setMaxWidth(String maxWidth) {
+    public void setMaxWidth(double maxWidth) {
         this.maxWidth = maxWidth;
         //if (maxWidth < 0.0) throw new InvalidValueException("maxWidth", maxWidth);
     }
@@ -102,10 +98,10 @@ public class ConfigurableImageBlock extends Block {
 //			} catch (JSONException e) {
 //			}
 //    	}
-    	return Double.parseDouble(PDFUtils.evalString(context, params, this.maxHeight));
+    	return Double.parseDouble(PDFUtils.evalString(context, params, String.valueOf(this.maxHeight), null));
     }
     
-    public void setMaxHeight(String maxHeight) {
+    public void setMaxHeight(double maxHeight) {
         this.maxHeight = maxHeight;
         //if (maxHeight < 0.0) throw new InvalidValueException("maxHeight", maxHeight);
     }
@@ -139,7 +135,8 @@ public class ConfigurableImageBlock extends Block {
                     t.rotate(rotation, imgWidth / 2.0, imgHeight / 2.0);
                 }
                 dc.transform(t);
-                g2 = dc.createGraphics((float) imgWidth, (float) imgHeight);
+                //g2 = dc.createGraphics((float) imgWidth, (float) imgHeight);
+                g2 = new PdfGraphics2D(dc, (float) imgWidth, (float) imgHeight);
 
                 //avoid a warning from Batik
                 System.setProperty("org.apache.batik.warn_destination", "false");

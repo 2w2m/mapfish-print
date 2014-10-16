@@ -4,17 +4,16 @@
 
 package org.mapfish.print.config.layout;
 
-import java.util.List;
-
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfPTable;
 import org.mapfish.print.InvalidValueException;
 import org.mapfish.print.PDFCustomBlocks;
 import org.mapfish.print.PDFUtils;
 import org.mapfish.print.RenderingContext;
 import org.mapfish.print.utils.PJsonObject;
 
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.pdf.PdfContentByte;
-import com.lowagie.text.pdf.PdfPTable;
+import java.util.List;
 
 public class AbsoluteColumnsBlock extends Block {
     private List<Block> items;
@@ -24,10 +23,10 @@ public class AbsoluteColumnsBlock extends Block {
     private int absoluteY = Integer.MIN_VALUE;
     private int width = Integer.MIN_VALUE;
     */
-    private String absoluteX = null;
+    private double absoluteX = Double.MIN_VALUE;
 //    private double absoluteX = Double.MIN_VALUE;
-    private String absoluteY = null;
-    private String widthVar = null;
+    private double absoluteY = Double.MIN_VALUE;
+    private double width = Double.MIN_VALUE;
     private int nbColumns = Integer.MIN_VALUE;
     private TableConfig config = null;
 
@@ -36,9 +35,10 @@ public class AbsoluteColumnsBlock extends Block {
         if (isAbsolute()) {
             context.getCustomBlocks().addAbsoluteDrawer(new PDFCustomBlocks.AbsoluteDrawer() {
                 public void render(PdfContentByte dc) throws DocumentException {
+
                     final PdfPTable table = PDFUtils.buildTable(items, params, context, nbColumns, config);
                     if (table != null) {
-                    	final float width = getWidth(context, params);
+                        final float width = getWidth(context, params);
                         table.setTotalWidth(width);
                         table.setLockedWidth(true);
 
@@ -72,28 +72,28 @@ public class AbsoluteColumnsBlock extends Block {
         this.widths = widths;
     }
 
-    public void setAbsoluteX(String absoluteX) {
+    public void setAbsoluteX(double absoluteX) {
         this.absoluteX = absoluteX;
     }
 
     public float getAbsoluteX(RenderingContext context, PJsonObject params) {
-      return Float.parseFloat(PDFUtils.evalString(context, params, absoluteX));
+      return Float.parseFloat(PDFUtils.evalString(context, params, String.valueOf(absoluteX), null));
     }
     
-    public void setAbsoluteY(String absoluteY) {
+    public void setAbsoluteY(double absoluteY) {
         this.absoluteY = absoluteY;
     }
 
     public float getAbsoluteY(RenderingContext context, PJsonObject params) {
-        return Float.parseFloat(PDFUtils.evalString(context, params, absoluteY));
+        return Float.parseFloat(PDFUtils.evalString(context, params, String.valueOf(absoluteY), null));
       }
       
-    public void setWidth(String width) {
-        this.widthVar = width;
+    public void setWidth(double width) {
+        this.width = width;
     }
 
     public float getWidth(RenderingContext context, PJsonObject params) {
-        return Float.parseFloat(PDFUtils.evalString(context, params, widthVar));
+        return Float.parseFloat(PDFUtils.evalString(context, params, String.valueOf(width), null));
       }
       
     public void setNbColumns(int nbColumns) {
@@ -101,14 +101,14 @@ public class AbsoluteColumnsBlock extends Block {
     }
 
     public boolean isAbsolute() {
-        return absoluteX != null &&
-                absoluteY != null &&
-                widthVar != null;
+        return absoluteX != Double.MIN_VALUE &&
+                absoluteY != Double.MIN_VALUE &&
+                width != Double.MIN_VALUE;
     }
 
-    public MapBlock getMap() {
+    public MapBlock getMap(String name) {
         for (Block item : items) {
-            MapBlock result = item.getMap();
+            MapBlock result = item.getMap(name);
             if (result != null) {
                 return result;
             }
@@ -125,8 +125,8 @@ public class AbsoluteColumnsBlock extends Block {
         if (items == null) throw new InvalidValueException("items", "null");
         if (items.size() < 1) throw new InvalidValueException("items", "[]");
 
-        if (!((absoluteX != null && absoluteY != null && widthVar != null) ||
-                (absoluteX == null && absoluteY == null && widthVar == null))) {
+        if (!((absoluteX != Double.MIN_VALUE && absoluteY != Double.MIN_VALUE && width != Double.MIN_VALUE) ||
+                (absoluteX == Double.MIN_VALUE && absoluteY == Double.MIN_VALUE && width == Double.MIN_VALUE))) {
             throw new InvalidValueException("absoluteX, absoluteY or width", "all of them must be defined or none");
         }
 
