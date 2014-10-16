@@ -207,6 +207,10 @@ public class PDFUtils {
             }
             path = path.replace("/", File.separator);
             return Image.getInstance(new File(path).toURI().toURL());
+        } else if (uri.getPath().endsWith(".svg")) {
+            // Handling von SVG-Files
+            return handleSVG(context, uri);
+
         } else {
 
             final String contentType;
@@ -327,9 +331,13 @@ public class PDFUtils {
                     LOGGER.warn("The status code was not a valid code, a default image is being returned.");
 
                     return image;
+                } else if ("image/svg".equals(contentType)) {
+                    return handleSVG(context, uri);
                 } else {
                     if (LOGGER.isDebugEnabled()) LOGGER.debug("loaded image: " + uri);
+                    //FIXME wm: data ist bei SVG kein ByteArray!!!
                     return Image.getInstance(data);
+
                 }
             } catch (IOException e) {
                 LOGGER.error("Server returned an error for " + uri + ": " + e.getMessage());
@@ -342,6 +350,20 @@ public class PDFUtils {
             }
         }
     }
+
+    private static Image handleSVG(final RenderingContext context, final URI uri) throws
+            IOException, DocumentException {
+        // create SVG-Image from data
+        double maxIconWidth = 10000d;   // Dummy
+        double maxIconHeight = 10000d;   // Dummy
+        double scale = 1.0;   // Dummy
+        try {
+            return createImageFromSVG(context, uri.toString(), maxIconWidth, maxIconHeight, scale);
+        } catch(IOException e){
+            return handleImageLoadError(context, e.getMessage());
+        }
+    }
+
 
     /**
      * In the case url fails to load an image this method should be called to handle the issue.  If the configuration
